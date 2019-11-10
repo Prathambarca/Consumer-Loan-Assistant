@@ -1,3 +1,5 @@
+
+
 import javax.swing.*;
 import java.awt.Insets;
 import java.awt.*;
@@ -126,11 +128,11 @@ c.gridy = 5;
 c.gridwidth = 2;
 c.insets = new Insets(10, 0, 10 ,0);
 getContentPane().add(newLoanButton,c);
-// newLoanButton.addActionListener(new ActionListener(){
-//     public void ActionPerformed(ActionEvent e) {
-//         newLoanButtonActionEventPerformed(e);
-//     }
-// });
+newLoanButton.addActionListener(new ActionListener(){
+    public void actionPerformed(ActionEvent e) {
+        newLoanButtonActionPerformed(e);
+    }
+});
 
 c.gridx = 2;
 c.gridy = 2;
@@ -181,6 +183,36 @@ c.gridx = 3;
 c.gridy = 5;
 c.anchor=GridBagConstraints.CENTER;
 getContentPane().add(exitButton,c); 
+balancetextf.addActionListener(new ActionListener ()
+{
+public void actionPerformed(ActionEvent e)
+{
+balancetextfActionPerformed(e);
+}
+});
+interesttextf.addActionListener(new ActionListener ()
+{
+public void actionPerformed(ActionEvent e)
+{
+interesttextfActionPerformed(e);
+}
+});
+monthstextf.addActionListener(new ActionListener ()
+{
+public void actionPerformed(ActionEvent e)
+{
+monthstextfActionPerformed(e);
+}
+});
+paymenttextf.addActionListener(new ActionListener ()
+{
+public void actionPerformed(ActionEvent e)
+{
+paymenttextfActionPerformed(e);
+}
+});
+
+
 exitButton.addActionListener(new ActionListener()
 {
 public void actionPerformed(ActionEvent e)
@@ -197,39 +229,99 @@ setBounds((int) (0.5 * (screenSize.width - getWidth())), (int) (0.5 * (screenSiz
 paymentButton.doClick();
 //myControl.setFocusable(false);
 }
-private void exitForm(WindowEvent evt)
-{
-System.exit(0);
-}
+
 private void computeButtonActionPerformed(ActionEvent e)
 {
     double balance, interest, payment;
     double loanBalance, finalPayment;
     int months;
     double monthlyInterest, multiplier;
+    if (validateDecimalNumber(balancetextf))
+{
     balance =
     Double.valueOf(balancetextf.getText()).doubleValue();
+}
+else
+{
+    JOptionPane.showConfirmDialog(null, "Invalid or empty Loan Balance entry.\nPlease correct.", "Balance Input Error", JOptionPane.DEFAULT_OPTION,
+JOptionPane.INFORMATION_MESSAGE);
+return;
+}
+if (validateDecimalNumber(interesttextf))
+{
     interest =
     Double.valueOf(interesttextf.getText()).doubleValue();
+}
+else
+{
+    JOptionPane.showConfirmDialog(null, "Invalid or empty Interest Rate entry.\nPlease correct.", "Interest Input Error", JOptionPane.DEFAULT_OPTION,
+JOptionPane.INFORMATION_MESSAGE);
+return;
+}
     monthlyInterest = interest / 1200;
     // Compute loan payment
     if(computePayment){
+        if (validateDecimalNumber(monthstextf))
+{
     months =
     Integer.valueOf(monthstextf.getText()).intValue();
+}
+else{
+    JOptionPane.showConfirmDialog(null, "Invalid or empty Number of Payments entry.\nPlease correct.", "Number of Payments Input Error",
+JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
+    return;
+}
+    if(interest==0){
+        payment = balance/months;
+    }else{
     multiplier = Math.pow(1 + monthlyInterest, months);
     payment = balance * monthlyInterest * multiplier / (multiplier - 1);
+}
     paymenttextf.setText(new DecimalFormat("0.00").format(payment));
     }
     else{
+        if (validateDecimalNumber(paymenttextf))
+{
         payment =
 Double.valueOf(paymenttextf.getText()).doubleValue();
+}
+else
+{
+    JOptionPane.showConfirmDialog(null, "Invalid or empty Monthly Payment entry.\nPlease correct.", "Payment Input Error", JOptionPane.DEFAULT_OPTION,
+JOptionPane.INFORMATION_MESSAGE);
+return;
+}
+if (interest == 0)
+{
+months = (int)(balance / payment);
+}
+else
+{
 months = (int)((Math.log(payment) - Math.log(payment - balance * monthlyInterest))
 / Math.log(1 + monthlyInterest));
+}
 monthstextf.setText(String.valueOf(months));
     }
 // reset payment prior to analysis to fix at two decimals
 payment =
 Double.valueOf(paymenttextf.getText()).doubleValue();
+if (payment <= (balance * monthlyInterest + 1.0))
+{
+if (JOptionPane.showConfirmDialog(null, "Minimum payment must be $" +
+new DecimalFormat("0.00").format((int)(balance * monthlyInterest + 1.0)) + "\n" + "Do you want to use the minimum payment?", "Input Error", JOptionPane.YES_NO_OPTION,
+JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION)
+{
+paymenttextf.setText(new DecimalFormat("0.00").format((int)
+(balance * monthlyInterest + 1.0)));
+payment =
+Double.valueOf(paymenttextf.getText()).doubleValue();
+}
+else
+{
+paymenttextf.requestFocus();
+return;
+}
+}
 // show analysis
 analysisTextArea.setText("Loan Balance: $" + new
 DecimalFormat("0.00").format(balance));
@@ -266,7 +358,19 @@ newLoanButton.requestFocus();
 }
 private void newLoanButtonActionPerformed(ActionEvent e)
 {
-
+// clear computed value and analysis
+if (computePayment)
+{
+paymenttextf.setText("");
+}
+else
+{
+monthstextf.setText("");
+}
+analysisTextArea.setText("");
+computeButton.setEnabled(true);
+newLoanButton.setEnabled(false);
+balancetextf.requestFocus();
 }
 private void monthsButtonActionPerformed(ActionEvent e)
 {
@@ -298,8 +402,68 @@ paymenttextf.setBackground(lightYellow);
 computeButton.setText("Compute Monthly Payment");
 
 }
+private void balancetextfActionPerformed(ActionEvent e)
+{
+balancetextf.transferFocus();
+
+}
+private void interesttextfActionPerformed(ActionEvent e)
+{
+interesttextf.transferFocus();
+}
+private void monthstextfActionPerformed(ActionEvent e)
+{
+monthstextf.transferFocus();
+}
+private void paymenttextfActionPerformed(ActionEvent e)
+{
+paymenttextf.transferFocus();
+}
+private boolean validateDecimalNumber(JTextField tf)
+{
+// checks to see if text field contains
+// valid decimal number with only digits and a single decimal point
+String s = tf.getText().trim();
+boolean hasDecimal = false;
+boolean valid = true;
+if (s.length() == 0)
+{
+valid = false;
+}
+else
+{
+for (int i = 0; i < s.length(); i++)
+{
+char c = s.charAt(i);
+if (c >= '0' && c <= '9')
+{
+continue;
+}
+
+else if (c == '.' && !hasDecimal)
+{
+hasDecimal = true;
+}
+else
+{
+// invalid character found
+valid = false;
+}
+}
+}
+tf.setText(s);
+if (!valid)
+{
+tf.requestFocus();
+}
+return (valid);
+}
+private void exitForm(WindowEvent evt)
+{
+System.exit(0);
+}
 private void exitButtonActionPerformed(ActionEvent e)
 {
 System.exit(0);
 }
-}   
+} 
